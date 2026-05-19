@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BST Visualizer</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f5f7fa; }
+    canvas { border: 1px solid #ccc; background: #fff; }
+  </style>
+</head>
+<body>
+
+<div class="container py-4">
+  <h2 class="text-center mb-4">Binary Search Tree Visualizer</h2>
+
+  <div class="d-flex gap-2 mb-3">
+    <input type="number" id="value" class="form-control" placeholder="Enter number">
+    <button class="btn btn-primary" onclick="insertNode()">Insert</button>
+    <button class="btn btn-warning" onclick="searchNode()">Search</button>
+    <button class="btn btn-danger" onclick="deleteNodeUI()">Delete</button>
+    <button class="btn btn-success" onclick="inorder()">Inorder</button>
+  </div>
+
+  <p><strong>Traversal Output:</strong> <span id="output"></span></p>
+  <p><strong>Status:</strong> <span id="status"></span></p>
+
+  <canvas id="canvas" width="900" height="400"></canvas>
+</div>
+
+<script>
+class Node {
+  constructor(data) {
+    this.data = data;
+    this.left = null;
+    this.right = null;
+  }
+}
+
+class BST {
+  constructor() {
+    this.root = null;
+  }
+
+  insert(data) {
+    const newNode = new Node(data);
+    if (!this.root) {
+      this.root = newNode;
+      return;
+    }
+
+    let current = this.root;
+    while (true) {
+      if (data < current.data) {
+        if (!current.left) {
+          current.left = newNode;
+          return;
+        }
+        current = current.left;
+      } else {
+        if (!current.right) {
+          current.right = newNode;
+          return;
+        }
+        current = current.right;
+      }
+    }
+  }
+
+  search(node, value) {
+    if (!node) return false;
+    if (node.data === value) return true;
+    if (value < node.data) return this.search(node.left, value);
+    return this.search(node.right, value);
+  }
+
+  deleteNode(root, key) {
+    if (!root) return root;
+
+    if (key < root.data) {
+      root.left = this.deleteNode(root.left, key);
+    } else if (key > root.data) {
+      root.right = this.deleteNode(root.right, key);
+    } else {
+      // Node found
+      if (!root.left) return root.right;
+      if (!root.right) return root.left;
+
+      // two children
+      let minNode = this.findMin(root.right);
+      root.data = minNode.data;
+      root.right = this.deleteNode(root.right, minNode.data);
+    }
+    return root;
+  }
+
+  findMin(node) {
+    while (node.left) node = node.left;
+    return node;
+  }
+
+  inorder(node, result = []) {
+    if (node) {
+      this.inorder(node.left, result);
+      result.push(node.data);
+      this.inorder(node.right, result);
+    }
+    return result;
+  }
+}
+
+const tree = new BST();
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+function insertNode() {
+  const val = document.getElementById("value").value;
+  if (val === "") return;
+  tree.insert(parseInt(val));
+  drawTree();
+}
+
+function searchNode() {
+  const val = parseInt(document.getElementById("value").value);
+  if (isNaN(val)) return;
+  const found = tree.search(tree.root, val);
+  document.getElementById("status").innerText = found ? "Value Found" : "Not Found";
+}
+
+function deleteNodeUI() {
+  const val = parseInt(document.getElementById("value").value);
+  if (isNaN(val)) return;
+  tree.root = tree.deleteNode(tree.root, val);
+  drawTree();
+}
+
+function inorder() {
+  const result = tree.inorder(tree.root);
+  document.getElementById("output").innerText = result.join(", ");
+}
+
+function drawTree() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawNode(tree.root, canvas.width / 2, 40, canvas.width / 4);
+}
+
+function drawNode(node, x, y, gap) {
+  if (!node) return;
+
+  ctx.beginPath();
+  ctx.arc(x, y, 20, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillText(node.data, x - 5, y + 5);
+
+  if (node.left) {
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - gap, y + 60);
+    ctx.stroke();
+    drawNode(node.left, x - gap, y + 60, gap / 2);
+  }
+
+  if (node.right) {
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + gap, y + 60);
+    ctx.stroke();
+    drawNode(node.right, x + gap, y + 60, gap / 2);
+  }
+}
+</script>
+
+</body>
+</html>
